@@ -1,11 +1,11 @@
 /* -----------------------------------------------------------------------------
 The copyright in this software is being made available under the BSD
-License, included below. No patent rights, trademark rights and/or 
-other Intellectual Property Rights other than the copyrights concerning 
+License, included below. No patent rights, trademark rights and/or
+other Intellectual Property Rights other than the copyrights concerning
 the Software are granted under this license.
 
 For any license concerning other Intellectual Property rights than the software,
-especially patent licenses, a separate Agreement needs to be closed. 
+especially patent licenses, a separate Agreement needs to be closed.
 For more information please contact:
 
 Fraunhofer Heinrich Hertz Institute
@@ -224,6 +224,12 @@ const std::vector<SVPair<BitDepthAndColorSpace>> BitColorSpaceToIntMap =
 {
   { "yuv420",                    YUV420_8 },
   { "yuv420_10",                 YUV420_10 },
+  { "yuv422",                    YUV422_8 },
+  { "yuv422_10",                 YUV422_10 },
+  { "yuv444",                    YUV444_8 },
+  { "yuv444_10",                 YUV444_10 },
+  { "yuv400",                    YUV400_8 },
+  { "yuv400_10",                 YUV400_10 },
 };
 
 
@@ -392,6 +398,7 @@ bool VVEncAppCfg::parseCfg( int argc, char* argv[] )
   IStreamToEnum<vvencProfile>       toProfile                    ( &m_profile,                     &ProfileToEnumMap      );
   IStreamToEnum<vvencTier>          toLevelTier                  ( &m_levelTier,                   &TierToEnumMap         );
   IStreamToEnum<vvencLevel>         toLevel                      ( &m_level,                       &LevelToEnumMap        );
+  IStreamToEnum<vvencCostMode>      toCostMode                   ( &m_costMode,                    &CostModeToEnumMap     );
   IStreamToEnum<vvencSegmentMode>   toSegment                    ( &m_SegmentMode,                 &SegmentToEnumMap      );
   IStreamToEnum<vvencHDRMode>       toHDRMode                    ( &m_HdrMode,                     &HdrModeToIntMap       );
 
@@ -451,6 +458,7 @@ bool VVEncAppCfg::parseCfg( int argc, char* argv[] )
   ("threads,-t",        m_numThreads,             "Number of threads default: [size < 720p: 4, >= 720p: 8]")
 
   ("gopsize,g",         m_GOPSize,                "GOP size of temporal structure (16,32)")
+  ("costmode",          toCostMode,               "Use alternative cost functions: choose between 'lossy', 'sequence_level_lossless', 'lossless' (which forces QP to " MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP) ") and 'mixed_lossless_lossy' (which used QP'=" MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME) " for pre-estimates of transquant-bypass blocks).")
   ("refreshtype,-rt",   toDecRefreshType,         "intra refresh type (idr,cra)")
   ("refreshsec,-rs",    m_IntraPeriodSec,         "Intra period/refresh in seconds")
   ("intraperiod,-ip",   m_IntraPeriod,            "Intra period in frames (0: use intra period in seconds (refreshsec), else: n*gopsize)")
@@ -481,7 +489,7 @@ bool VVEncAppCfg::parseCfg( int argc, char* argv[] )
   ("hrdparameterspresent,-hrd", toHrd,                 "Emit VUI HRD information (auto(-1),off(0),on(1); default: auto - only if needed by dependent options)",  true)
   ("decodedpicturehash,-dph",   toHashType,            "Control generation of decode picture hash SEI messages, (0:off, 1:md5, 2:crc, 3:checksum)")
   ;
-  
+
   if ( vvenc_is_tracing_enabled() )
   {
     opts.setSubSection( "Tracing" );
@@ -685,7 +693,7 @@ bool VVEncAppCfg::parseCfgFF( int argc, char* argv[] )
   opts.addOptions()
   ("Hdr",                                             toHDRMode,                                        "set HDR mode (+SEI messages) + BT.709 or BT.2020 color space. "
                                                                                                         "If maxcll or masteringdisplay is set, HDR10/PQ is enabled. use: off, pq|hdr10, pq_2020|hdr10_2020, hlg, hlg_2020")
-   ;
+  ;
 
   po::setDefaults( opts );
   std::ostringstream easyOpts;
@@ -1124,7 +1132,7 @@ bool VVEncAppCfg::parseCfgFF( int argc, char* argv[] )
   //
   // parse command line parameters and read configuration files
   //
-    
+
   po::setDefaults( opts );
   po::ErrorReporter err;
   const list<const char*>& argv_unhandled = po::scanArgv( opts, argc, (const char**) argv, err );
@@ -1244,7 +1252,7 @@ bool VVEncAppCfg::parseCfgFF( int argc, char* argv[] )
     m_RCNumPasses = m_RCTargetBitrate > 0 ? 2 : 1;
   }
 
-  if( m_packedYUVMode && ! m_reconFileName.empty() )  
+  if( m_packedYUVMode && ! m_reconFileName.empty() )
   {
     if( ( m_outputBitDepth[ 0 ] != 10 && m_outputBitDepth[ 0 ] != 12 )
         || ( ( ( m_SourceWidth ) & ( 1 + ( m_outputBitDepth[ 0 ] & 3 ) ) ) != 0 ) )
