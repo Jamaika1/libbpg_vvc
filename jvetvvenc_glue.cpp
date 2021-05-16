@@ -236,7 +236,6 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
       if (s->params.chroma_format == BPG_FORMAT_420)
       {
         add_opt(&argc, argv, "--format=yuv420_10");
-        //add_opt(&argc, argv, "--profile=main10");
       }
       if (s->params.chroma_format == BPG_FORMAT_422)
       {
@@ -269,19 +268,13 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
     }
 
     if (s->params.color_space == BPG_CS_YCbCr) {
-      add_opt(&argc, argv, "--qpa=0");
-      //add_opt(&argc, argv, "--hrd=off");
-      //add_opt(&argc, argv, "--hrdparameterspresent=0");
+      add_opt(&argc, argv, "--hdr=off");
     }
     if (s->params.color_space == BPG_CS_YCbCr_BT709) {
-      add_opt(&argc, argv, "--qpa=1");
-      //add_opt(&argc, argv, "--hrd=off");
-      //add_opt(&argc, argv, "--hrdparameterspresent=0");
+      add_opt(&argc, argv, "--hdr=off");
     }
     if (s->params.color_space == BPG_CS_YCbCr_BT2020) {
-      add_opt(&argc, argv, "--qpa=3");
-      //add_opt(&argc, argv, "--hrd=hlg_2020");
-      //add_opt(&argc, argv, "--hrdparameterspresent=1");
+      add_opt(&argc, argv, "--hdr=hlg_2020");
     }
 
     if (s->params.compress_level == 8 || s->params.compress_level == 9) {
@@ -309,8 +302,8 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
     //add_opt(&argc, argv, buf);
     add_opt(&argc, argv, "--frames=1");
     add_opt(&argc, argv, "--threads=4");
-    add_opt(&argc, argv, "--gopsize=32");
-    add_opt(&argc, argv, "--intraperiod=32");
+    add_opt(&argc, argv, "--gopsize=1");
+    add_opt(&argc, argv, "--intraperiod=1");
     //add_opt(&argc, argv, "--preset=medium");
     add_opt(&argc, argv, "--level=6.3");
     add_opt(&argc, argv, "--tier=main");
