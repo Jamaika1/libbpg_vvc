@@ -27,7 +27,7 @@
 #include <math.h>
 #include <getopt.h>
 #include <inttypes.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 #include <SDL/SDL.h>
@@ -356,7 +356,7 @@ static void help(void)
            "arrows         pan\n"
            "c              center\n"
            "b              toggle background type\n";
-#ifdef WIN32
+#ifdef _WIN32
     MessageBox(NULL, str, "Error", MB_ICONERROR | MB_OK);
     exit(1);
 #else
