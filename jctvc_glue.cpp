@@ -1,11 +1,10 @@
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 #include <unistd.h>
 #include <iostream>
 #include "TAppEncTop.h"
-#include "TLibCommon/Debug.h"
-#include "TLibEncoder/TEncAnalyze.h"
+#include "Utilities/program_options_lite.h"
 
 #include "bpgenc.h"
 
@@ -40,7 +39,7 @@ static HEVCEncoderContext *jctvc_open(const HEVCEncodeParams *params)
     memset(s, 0, sizeof(*s));
 
     s->params = *params;
-#ifdef WIN32
+#ifdef _WIN32
     if (GetTempPath(sizeof(buf), buf) > sizeof(buf) - 1) {
         fprintf(stderr, "Temporary path too long\n");
         free(s);
@@ -73,6 +72,7 @@ static int jctvc_encode(HEVCEncoderContext *s, Image *img)
 static int jctvc_close(HEVCEncoderContext *s, uint8_t **pbuf)
 {
     TAppEncTop cTAppEncTop;
+//    BPGImageFormatEnum *preferred_chroma_format;
     int argc;
     char *argv[ARGV_MAX + 1];
     char buf[1024];
@@ -94,6 +94,13 @@ static int jctvc_close(HEVCEncoderContext *s, uint8_t **pbuf)
 
     argc = 0;
     add_opt(&argc, argv, "jctvc"); /* dummy executable name */
+
+    fprintf( stdout, "\n" );
+    fprintf( stdout, "HM software: Encoder Version [%s] (including RExt)", NV_VERSION );
+    fprintf( stdout, NVM_ONOS );
+    fprintf( stdout, NVM_COMPILEDBY );
+    fprintf( stdout, NVM_BITS );
+    fprintf( stdout, "\n\n" );
 
     snprintf(buf, sizeof(buf),"--InputFile=%s", s->infilename);
     add_opt(&argc, argv, buf);
@@ -131,10 +138,12 @@ static int jctvc_close(HEVCEncoderContext *s, uint8_t **pbuf)
     
     snprintf(buf, sizeof(buf),"--SEIDecodedPictureHash=%d", 
              s->params.sei_decoded_picture_hash);
+    add_opt(&argc, argv, "--RDOQ=1");
+    add_opt(&argc, argv, "--RDOQTS=1");
     add_opt(&argc, argv, buf);
     
     if (!s->params.verbose)
-      add_opt(&argc, argv, "--Verbose=0");
+      add_opt(&argc, argv, "--SummaryVerboseness");
       
     /* single frame */
     snprintf(buf, sizeof(buf),"--FramesToBeEncoded=%d", s->frame_count);
@@ -147,7 +156,10 @@ static int jctvc_close(HEVCEncoderContext *s, uint8_t **pbuf)
     add_opt(&argc, argv, "--FrameRate=25");
 
     /* general config */
+    add_opt(&argc, argv, "--MaxCUWidth=64");
+    add_opt(&argc, argv, "--MaxCUHeight=64");
     add_opt(&argc, argv, "--QuadtreeTULog2MaxSize=5");
+    add_opt(&argc, argv, "--QuadtreeTULog2MinSize=2");
     if (s->params.compress_level == 9) {
         add_opt(&argc, argv, "--QuadtreeTUMaxDepthIntra=4");
         add_opt(&argc, argv, "--QuadtreeTUMaxDepthInter=4");
@@ -160,37 +172,73 @@ static int jctvc_close(HEVCEncoderContext *s, uint8_t **pbuf)
         add_opt(&argc, argv, "--Profile=main_444_16_intra");
 
         add_opt(&argc, argv, "--IntraPeriod=1");
+        add_opt(&argc, argv, "--DecodingRefreshType=1");
         add_opt(&argc, argv, "--GOPSize=1");
+        add_opt(&argc, argv, "--ReWriteParamSetsFlag=1");
     } else {
         int gop_size;
 
+        add_opt(&argc, argv, "--CabacZeroWordPaddingEnabled=0");
+        add_opt(&argc, argv, "--VideoSignalTypePresent=0");
+        //add_opt(&argc, argv, "--MaxBytesPerPicDenom=0");
+        add_opt(&argc, argv, "--SEIToneMapExposureCompensationValueDenomIdc=0");
+        add_opt(&argc, argv, "--SEIChromaResamplingHorizontalFilterType=0");
+        add_opt(&argc, argv, "--SEIChromaResamplingVerticalFilterType=0");
+        add_opt(&argc, argv, "--SEIKneeFunctionNumKneePointsMinus1=0");
+        add_opt(&argc, argv, "--ChromaLocInfoPresent=0");
+        add_opt(&argc, argv, "--ConstrainedIntraPred=1");
         add_opt(&argc, argv, "--Profile=main_444_16");
         add_opt(&argc, argv, "--IntraPeriod=250");
+        add_opt(&argc, argv, "--DecodingRefreshType=1");
+        add_opt(&argc, argv, "--ReWriteParamSetsFlag=1");
         gop_size = 1;
         snprintf(buf, sizeof(buf), "--GOPSize=%d", gop_size);
         add_opt(&argc, argv, buf);
 
         for(i = 0; i < gop_size; i++) {
-            snprintf(buf, sizeof(buf), "--Frame%d=P 1 3 0.4624 0 0 0 1 1 -1 0", i + 1);
+            snprintf(buf, sizeof(buf), "--Frame%d=P 1 3 0 0.4624 0 0 1.0 0 0 0 1 1 -1 0 0 0 0", i + 1);
             add_opt(&argc, argv, buf);
         }
     }
     add_opt(&argc, argv, "--TransformSkip=1");
     add_opt(&argc, argv, "--TransformSkipFast=1");
+    add_opt(&argc, argv, "--TransformSkipLog2MaxSize=2");
+    add_opt(&argc, argv, "--SAO=1");
+    add_opt(&argc, argv, "--AMP=1");
 
     /* Note: Format Range extension */
     if (s->params.chroma_format == BPG_FORMAT_444) {
         add_opt(&argc, argv, "--CrossComponentPrediction=1");
     }
 
+//        add_opt(&argc, argv, "--SEIDecodedPictureHash=3");
     if (s->params.lossless) {
         add_opt(&argc, argv, "--CostMode=lossless");
-        add_opt(&argc, argv, "--SAO=0");
-        add_opt(&argc, argv, "--LoopFilterDisable");
-        add_opt(&argc, argv, "--TransquantBypassEnableFlag");
-        add_opt(&argc, argv, "--CUTransquantBypassFlagForce");
-        add_opt(&argc, argv, "--ImplicitResidualDPCM");
-        add_opt(&argc, argv, "--GolombRiceParameterAdaptation");
+//        if (s->params.chroma_format == BPG_FORMAT_420 || s->params.chroma_format == BPG_FORMAT_422) {
+//        add_opt(&argc, argv, "--InputColourSpaceConvert=YCbCrtoYYY");
+//        add_opt(&argc, argv, "--ChromaFormatIDC=444");
+//        add_opt(&argc, argv, "--CrossComponentPrediction=1");
+//        add_opt(&argc, argv, "--OutputInternalColourSpace=0");
+//        add_opt(&argc, argv, "--SNRInternalColourSpace=0");
+//        }
+//        s->params.chroma_format = BPG_FORMAT_444;
+//        str = "444";
+
+        add_opt(&argc, argv, "--LoopFilterDisable=1");
+        add_opt(&argc, argv, "--TransquantBypassEnable=0");
+        add_opt(&argc, argv, "--CUTransquantBypassFlagForce=0");
+
+//        add_opt(&argc, argv, "--ExtendedPrecision=0");
+//        add_opt(&argc, argv, "--TransformSkipLog2MaxSize=2");
+//        add_opt(&argc, argv, "--ImplicitResidualDPCM=1");
+//        add_opt(&argc, argv, "--ExplicitResidualDPCM=1");
+//        add_opt(&argc, argv, "--ResidualRotation=1");
+//        add_opt(&argc, argv, "--SingleSignificanceMapContext=1");
+//        add_opt(&argc, argv, "--IntraReferenceSmoothing=1");
+//        add_opt(&argc, argv, "--GolombRiceParameterAdaptation=1");
+//        add_opt(&argc, argv, "--HighPrecisionPredictionWeighting=1");
+//        add_opt(&argc, argv, "--CrossComponentPrediction=1");
+
         add_opt(&argc, argv, "--HadamardME=0");
     }
 
