@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <math.h>
 #include <getopt.h>
 #include <inttypes.h>
@@ -257,7 +256,7 @@ static void bpg_show_info(const char *filename, int show_extensions)
 
 static void help(void)
 {
-    printf("BPG Image Decoder version " CONFIG_BPG_VERSION "\n"
+    printf("BPG Image Decoder version 1.0.0\n"
            "usage: bpgdec [options] infile\n"
            "Options:\n"
            "-o outfile.[ppm|png]   set the output filename (default = out.png)\n"

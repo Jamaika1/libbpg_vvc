@@ -346,7 +346,7 @@ static uint32_t timer_cb(uint32_t interval, void *param)
 static void help(void)
 {
     const char *str;
-    str = "BPG Image Viewer version " CONFIG_BPG_VERSION "\n"
+    str = "BPG Image Viewer version 1.0.0\n"
            "usage: bpgview infile...\n"
            "\n"
            "Keys:\n"
