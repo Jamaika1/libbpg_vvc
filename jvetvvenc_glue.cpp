@@ -1,4 +1,4 @@
-/** \file     jvetvvc.cpp
+/** \file     jvetvvenc.cpp
     \brief    Encoder application main
 */
 
@@ -270,18 +270,18 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
 
     if (s->params.color_space == BPG_CS_YCbCr) {
       add_opt(&argc, argv, "--qpa=0");
-      add_opt(&argc, argv, "--hrd=off");
-      add_opt(&argc, argv, "--hrdparameterspresent=0");
+      //add_opt(&argc, argv, "--hrd=off");
+      //add_opt(&argc, argv, "--hrdparameterspresent=0");
     }
     if (s->params.color_space == BPG_CS_YCbCr_BT709) {
       add_opt(&argc, argv, "--qpa=1");
-      add_opt(&argc, argv, "--hrd=off");
-      add_opt(&argc, argv, "--hrdparameterspresent=0");
+      //add_opt(&argc, argv, "--hrd=off");
+      //add_opt(&argc, argv, "--hrdparameterspresent=0");
     }
     if (s->params.color_space == BPG_CS_YCbCr_BT2020) {
       add_opt(&argc, argv, "--qpa=3");
-      add_opt(&argc, argv, "--hrd=hlg_2020");
-      add_opt(&argc, argv, "--hrdparameterspresent=1");
+      //add_opt(&argc, argv, "--hrd=hlg_2020");
+      //add_opt(&argc, argv, "--hrdparameterspresent=1");
     }
 
     if (s->params.compress_level == 8 || s->params.compress_level == 9) {
@@ -300,9 +300,9 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
       add_opt(&argc, argv, "--preset=faster");
     }
 
-    snprintf(buf, sizeof(buf),"--SEIDecodedPictureHash=%d",
-             s->params.sei_decoded_picture_hash);
-    add_opt(&argc, argv, buf);
+    //snprintf(buf, sizeof(buf),"--SEIDecodedPictureHash=%d",
+             //s->params.sei_decoded_picture_hash);
+    //add_opt(&argc, argv, buf);
 
     add_opt(&argc, argv, "--verbosity=6");
     //snprintf(buf, sizeof(buf),"--frames=%d", s->frame_count);
