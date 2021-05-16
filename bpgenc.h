@@ -47,6 +47,7 @@ typedef struct {
     int width;
     int height;
     int chroma_format; /* 0-3 */
+    int color_space;
     int bit_depth; /* 8-14 */
     int intra_only; /* 0-1 */
 
@@ -55,6 +56,8 @@ typedef struct {
     int sei_decoded_picture_hash; /* 0=no hash, 1=MD5 hash */
     int compress_level; /* 1-9 */
     int verbose;
+    int frame_rate;
+    int limited_range;
 } HEVCEncodeParams;
 
 typedef struct HEVCEncoderContext HEVCEncoderContext; 
@@ -66,7 +69,10 @@ typedef struct {
 } HEVCEncoder;
 
 extern HEVCEncoder jctvc_encoder;
+extern HEVCEncoder jvetvvc_encoder;
+extern HEVCEncoder jvetvvenc_encoder;
 extern HEVCEncoder x265_hevc_encoder;
+extern HEVCEncoder x265_svt_encoder;
 
 int x265_encode_picture(uint8_t **pbuf, Image *img, 
                         const HEVCEncodeParams *params);
