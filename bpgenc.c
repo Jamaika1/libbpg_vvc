@@ -1836,10 +1836,10 @@ static int build_modified_sps(uint8_t **pout_buf, int *pout_buf_len,
         bit_depth_luma = get_ue_golomb(gb) + 8;
         bit_depth_chroma = get_ue_golomb(gb) + 8;
         log2_max_poc_lsb = get_ue_golomb(gb) + 4;
-        if (log2_max_poc_lsb != 8) {
+        /*if (log2_max_poc_lsb != 8) {
             fprintf(stderr, "log2_max_poc_lsb must be 8 (%d)\n", log2_max_poc_lsb);
             return -1;
-        }
+        }*/
         sublayer_ordering_info = get_bits(gb, 1);
         get_ue_golomb(gb); /* max_dec_pic_buffering */
         get_ue_golomb(gb); /* num_reorder_pics */
@@ -1863,10 +1863,10 @@ static int build_modified_sps(uint8_t **pout_buf, int *pout_buf_len,
             return -1;
         }
         amp_enabled_flag = get_bits(gb, 1);
-        if (!amp_enabled_flag) {
-            fprintf(stderr, "amp_enabled_flag must be set\n");
+        /*if (!amp_enabled_flag) {
+            fprintf(stderr, "amp_enabled_flag must be set (%d)\n", amp_enabled_flag);
             return -1;
-        }
+        }*/
         sao_enabled = get_bits(gb, 1);
         pcm_enabled_flag = get_bits(gb, 1);
         if (pcm_enabled_flag) {
@@ -1877,18 +1877,18 @@ static int build_modified_sps(uint8_t **pout_buf, int *pout_buf_len,
             pcm_loop_filter_disabled_flag = get_bits(gb, 1);
         }
         nb_st_rps = get_ue_golomb(gb);
-        if (nb_st_rps != 0) {
+        /*if (nb_st_rps != 0) {
             fprintf(stderr, "nb_st_rps must be 0 (%d)\n", nb_st_rps);
             return -1;
-        }
+        }*/
         long_term_ref_pics_present_flag = get_bits(gb, 1);
-        if (long_term_ref_pics_present_flag) {
-            fprintf(stderr, "nlong_term_ref_pics_present_flag must be 0 (%d)\n", nb_st_rps);
+        /*if (long_term_ref_pics_present_flag) {
+            fprintf(stderr, "nlong_term_ref_pics_present_flag must be 0 (%d)\n", long_term_ref_pics_present_flag); //SAO=1, AMT=1
             return -1;
-        }
+        }*/
         sps_temporal_mvp_enabled_flag = get_bits(gb, 1);
         if (!sps_temporal_mvp_enabled_flag) {
-            fprintf(stderr, "sps_temporal_mvp_enabled_flag must be set\n");
+            fprintf(stderr, "sps_temporal_mvp_enabled_flag must be set (%d)\n", sps_temporal_mvp_enabled_flag);
             return -1;
         }
         sps_strong_intra_smoothing_enable_flag = get_bits(gb, 1);
@@ -1915,10 +1915,10 @@ static int build_modified_sps(uint8_t **pout_buf, int *pout_buf_len,
             }
 
             video_signal_type_present_flag = get_bits(gb, 1);
-            if (video_signal_type_present_flag) {
+            /*if (video_signal_type_present_flag) {
                 fprintf(stderr, "video_signal_type_present_flag must be 0\n");
                 return -1;
-            }
+            }*/
             chroma_loc_info_present_flag = get_bits(gb, 1);
             if (chroma_loc_info_present_flag) {
                 get_ue_golomb(gb);
@@ -1929,7 +1929,7 @@ static int build_modified_sps(uint8_t **pout_buf, int *pout_buf_len,
             skip_bits(gb, 1);
             default_display_window_flag = get_bits(gb, 1);
             if (default_display_window_flag) {
-                fprintf(stderr, "default_display_window_flag must be 0\n");
+                fprintf(stderr, "default_display_window_flag must be 0 (%d)\n", default_display_window_flag);
                 return -1;
             }
             vui_timing_info_present_flag = get_bits(gb, 1);
@@ -2172,10 +2172,18 @@ typedef enum {
 #if defined(USE_X265)
     HEVC_ENCODER_X265,
 #endif
+#if defined(USE_SVT)
+    HEVC_ENCODER_SVT,
+#endif
 #if defined(USE_JCTVC)
     HEVC_ENCODER_JCTVC,
 #endif
-
+#if defined(USE_JVETVVC)
+    HEVC_ENCODER_JVETVVC,
+#endif
+#if defined(USE_JVETVVENC)
+    HEVC_ENCODER_JVETVVENC,
+#endif
     HEVC_ENCODER_COUNT,
 } HEVCEncoderEnum;
 
@@ -2183,8 +2191,17 @@ static char *hevc_encoder_name[HEVC_ENCODER_COUNT] = {
 #if defined(USE_X265)
     "x265",
 #endif
+#if defined(USE_SVT)
+    "svt_hevc",
+#endif
 #if defined(USE_JCTVC)
     "jctvc",
+#endif
+#if defined(USE_JVETVVC)
+    "jvetvvc",
+#endif
+#if defined(USE_JVETVVENC)
+    "jvetvvenc",
 #endif
 };
 
@@ -2192,8 +2209,17 @@ static HEVCEncoder *hevc_encoder_tab[HEVC_ENCODER_COUNT] = {
 #if defined(USE_X265)
     &x265_hevc_encoder,
 #endif
+#if defined(USE_SVT)
+    &x265_svt_encoder,
+#endif
 #if defined(USE_JCTVC)
     &jctvc_encoder,
+#endif
+#if defined(USE_JVETVVC)
+    &jvetvvc_encoder,
+#endif
+#if defined(USE_JVETVVENC)
+    &jvetvvenc_encoder,
 #endif
 };
 
@@ -2219,9 +2245,12 @@ typedef struct BPGEncoderParameters {
     int lossless; /* true if lossless compression (qp and alpha_qp are
                      ignored) */
     BPGImageFormatEnum preferred_chroma_format;
+    BPGColorSpaceEnum preferred_color_space;
     int sei_decoded_picture_hash; /* 0, 1 */
     int compress_level; /* 1 ... 9 */
     int verbose;
+    int bit_depth;
+    int limited_range;
     HEVCEncoderEnum encoder_type;
     int animated; /* 0 ... 1: if true, encode as animated image */
     uint16_t loop_count; /* animations: number of loops. 0=infinite */
@@ -2264,10 +2293,12 @@ BPGEncoderParameters *bpg_encoder_param_alloc(void)
     p->qp = DEFAULT_QP;
     p->alpha_qp = -1;
     p->preferred_chroma_format = BPG_FORMAT_420;
+    p->preferred_color_space = BPG_CS_YCbCr;
     p->compress_level = DEFAULT_COMPRESS_LEVEL;
     p->frame_delay_num = 1;
     p->frame_delay_den = 25;
     p->loop_count = 0;
+    p->limited_range = 0;
     return p;
 }
 
@@ -2325,7 +2356,7 @@ static int bpg_encoder_encode_trailer(BPGEncoderContext *s,
                                        alpha_buf, alpha_buf_len,
                                        s->frame_duration_tab, s->frame_count);
     if (hevc_buf_len < 0) {
-        fprintf(stderr, "Error while creating HEVC data\n");
+        fprintf(stderr, "Error while creating HEVC data (%d)\n", hevc_buf_len);
         exit(1);
     }
     free(out_buf);
@@ -2432,12 +2463,15 @@ int bpg_encoder_encode(BPGEncoderContext *s, Image *img,
         ep->width = img->w;
         ep->height = img->h;
         ep->chroma_format = img->format;
+        ep->color_space = img->color_space;
         ep->bit_depth = img->bit_depth;
         ep->intra_only = !p->animated;
         ep->lossless = p->lossless;
         ep->sei_decoded_picture_hash = p->sei_decoded_picture_hash;
         ep->compress_level = p->compress_level;
         ep->verbose = p->verbose;
+        ep->frame_rate = p->frame_delay_den;
+        ep->limited_range = p->limited_range;
 
         s->enc_ctx = s->encoder->open(ep);
         if (!s->enc_ctx) {
@@ -2662,7 +2696,7 @@ void help(int is_full)
            "-f cfmt              set the preferred chroma format (420, 422, 444,\n"
            "                     default=420)\n"
            "-c color_space       set the preferred color space (ycbcr, rgb, ycgco,\n"
-           "                     ycbcr_bt709, ycbcr_bt2020, default=ycbcr)\n"
+           "                     ycbcr_bt709, ycbcr_bt2020 (HDR HLG), default=ycbcr)\n"
            "-b bit_depth         set the bit depth (8 to %d, default = %d)\n"
            "-lossless            enable lossless mode\n"
            "-e encoder           select the HEVC encoder (%s, default = %s)\n"
@@ -2753,11 +2787,14 @@ int main(int argc, char **argv)
             case 3:
                 p->lossless = 1;
                 color_space = BPG_CS_RGB;
+                //p->preferred_color_space = BPG_CS_RGB;
                 p->preferred_chroma_format = BPG_FORMAT_444;
                 bit_depth = 8;
+                p->limited_range = 0;
                 limited_range = 0;
                 break;
             case 4:
+                p->limited_range = 1;
                 limited_range = 1;
                 break;
             case 5:
@@ -2769,6 +2806,7 @@ int main(int argc, char **argv)
             case 7:
                 p->frame_delay_num = 1;
                 p->frame_delay_den = strtoul(optarg, NULL, 0);
+                //frame_delay_den = strtoul(optarg, NULL, 0);
                 if (p->frame_delay_den == 0) {
                     fprintf(stderr, "invalid frame rate\n");
                     exit(1);
@@ -2814,15 +2852,21 @@ int main(int argc, char **argv)
         case 'c':
             if (!strcmp(optarg, "ycbcr")) {
                 color_space = BPG_CS_YCbCr;
+                p->preferred_color_space = BPG_CS_YCbCr;
             } else if (!strcmp(optarg, "rgb")) {
                 color_space = BPG_CS_RGB;
+                p->preferred_color_space = BPG_CS_RGB;
                 p->preferred_chroma_format = BPG_FORMAT_444;
             } else if (!strcmp(optarg, "ycgco")) {
                 color_space = BPG_CS_YCgCo;
+                p->preferred_color_space = BPG_CS_YCgCo;
             } else if (!strcmp(optarg, "ycbcr_bt709")) {
                 color_space = BPG_CS_YCbCr_BT709;
+                p->preferred_color_space = BPG_CS_YCbCr_BT709;
             } else if (!strcmp(optarg, "ycbcr_bt2020")) {
                 color_space = BPG_CS_YCbCr_BT2020;
+                p->preferred_color_space = BPG_CS_YCbCr_BT2020;
+                //p->bit_depth = 10;
             } else {
                 fprintf(stderr, "Invalid color space format\n");
                 exit(1);
@@ -2837,6 +2881,7 @@ int main(int argc, char **argv)
             break;
         case 'b':
             bit_depth = atoi(optarg);
+            p->bit_depth = bit_depth;
             if (bit_depth < 8 || bit_depth > BIT_DEPTH_MAX) {
                 fprintf(stderr, "Invalid bit depth (range: 8 to %d)\n",
                         BIT_DEPTH_MAX);
