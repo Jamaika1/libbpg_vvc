@@ -46,7 +46,7 @@ static HEVCEncoderContext *x265_open(const HEVCEncodeParams *params)
     int preset_index;
     const char *preset;
     
-    s = malloc(sizeof(HEVCEncoderContext));
+    s = (HEVCEncoderContext *)malloc(sizeof(HEVCEncoderContext));
     memset(s, 0, sizeof(*s));
 
     s->api = x265_api_get(params->bit_depth);
@@ -73,6 +73,7 @@ static HEVCEncoderContext *x265_open(const HEVCEncodeParams *params)
     s->api->param_default_preset(p, preset, "ssim");
 
     p->bRepeatHeaders = 1;
+    p->bEnableSvtHevc = 0;
     p->decodedPictureHashSEI = params->sei_decoded_picture_hash;
     p->sourceWidth = params->width;
     p->sourceHeight = params->height;
@@ -104,7 +105,7 @@ static HEVCEncoderContext *x265_open(const HEVCEncodeParams *params)
     p->bEnableRectInter = 1;
     p->bEnableAMP = 1; /* cannot use 0 due to header restriction */
     p->internalBitDepth = params->bit_depth;
-    p->bEmitInfoSEI = 0;
+    p->bEmitInfoSEI = 1;
     if (params->verbose)
         p->logLevel = X265_LOG_INFO;
     else
@@ -113,6 +114,36 @@ static HEVCEncoderContext *x265_open(const HEVCEncodeParams *params)
     /* dummy frame rate */
     p->fpsNum = 25;
     p->fpsDenom = 1;
+
+    p->bAQMotion = 1;
+    p->bEnableHME = 1;
+    p->hmeSearchMethod[1] = p->hmeSearchMethod[2] = X265_STAR_SEARCH;
+    if (params->color_space == BPG_CS_YCbCr_BT709) {
+        p->vui.matrixCoeffs = 1;
+        p->rc.aqMode = 3;
+        p->vui.bEnableVideoFullRangeFlag = 0;
+    }
+    if (params->color_space == BPG_CS_YCbCr_BT2020) {
+        if (params->bit_depth == 8) {
+            p->vui.matrixCoeffs = 9;
+            p->rc.aqMode = 4;
+            p->vui.bEnableVideoFullRangeFlag = 0;
+        }
+        if (params->bit_depth >= 10) {
+            p->vui.matrixCoeffs = 9;
+            p->rc.aqMode = 4;
+            p->vui.bEnableVideoFullRangeFlag = 1;
+        }
+    }
+        //p->vui.bEnableVideoSignalTypePresentFlag = 1;
+        //p->vui.bEnableColorDescriptionPresentFlag = 1;
+        //if (params->bit_depth <= 10) {
+        //    svtHevcParam->encoderBitDepth = 10;
+        //}
+    p->rc.aqStrength = 1.0;
+    p->deblockingFilterTCOffset = -1;
+    p->deblockingFilterBetaOffset = 1;
+    p->psyRd = 2.0;
 
     p->rc.rateControlMode = X265_RC_CQP;
     p->rc.qp = params->qp;
@@ -139,7 +170,7 @@ static void add_nal(HEVCEncoderContext *s, const uint8_t *data, int data_len)
         new_size = (s->buf_size * 3) / 2;
         if (new_size < size)
             new_size = size;
-        s->buf = realloc(s->buf, new_size);
+        s->buf = (uint8_t *)realloc(s->buf, new_size);
         s->buf_size = new_size;
     }
     memcpy(s->buf + s->buf_len, data, data_len);
@@ -191,7 +222,7 @@ static int x265_close(HEVCEncoderContext *s, uint8_t **pbuf)
     }
 
     if (s->buf_len < s->buf_size) {
-        s->buf = realloc(s->buf, s->buf_len);
+        s->buf = (uint8_t *)realloc(s->buf, s->buf_len);
     }
 
     *pbuf = s->buf;
