@@ -1,11 +1,11 @@
 /* -----------------------------------------------------------------------------
 The copyright in this software is being made available under the BSD
-License, included below. No patent rights, trademark rights and/or
-other Intellectual Property Rights other than the copyrights concerning
+License, included below. No patent rights, trademark rights and/or 
+other Intellectual Property Rights other than the copyrights concerning 
 the Software are granted under this license.
 
 For any license concerning other Intellectual Property rights than the software,
-especially patent licenses, a separate Agreement needs to be closed.
+especially patent licenses, a separate Agreement needs to be closed. 
 For more information please contact:
 
 Fraunhofer Heinrich Hertz Institute
@@ -489,7 +489,7 @@ bool VVEncAppCfg::parseCfg( int argc, char* argv[] )
   ("hrdparameterspresent,-hrd", toHrd,                 "Emit VUI HRD information (auto(-1),off(0),on(1); default: auto - only if needed by dependent options)",  true)
   ("decodedpicturehash,-dph",   toHashType,            "Control generation of decode picture hash SEI messages, (0:off, 1:md5, 2:crc, 3:checksum)")
   ;
-
+  
   if ( vvenc_is_tracing_enabled() )
   {
     opts.setSubSection( "Tracing" );
@@ -693,7 +693,7 @@ bool VVEncAppCfg::parseCfgFF( int argc, char* argv[] )
   opts.addOptions()
   ("Hdr",                                             toHDRMode,                                        "set HDR mode (+SEI messages) + BT.709 or BT.2020 color space. "
                                                                                                         "If maxcll or masteringdisplay is set, HDR10/PQ is enabled. use: off, pq|hdr10, pq_2020|hdr10_2020, hlg, hlg_2020")
-  ;
+   ;
 
   po::setDefaults( opts );
   std::ostringstream easyOpts;
@@ -1132,7 +1132,7 @@ bool VVEncAppCfg::parseCfgFF( int argc, char* argv[] )
   //
   // parse command line parameters and read configuration files
   //
-
+   
   po::setDefaults( opts );
   po::ErrorReporter err;
   const list<const char*>& argv_unhandled = po::scanArgv( opts, argc, (const char**) argv, err );
@@ -1252,7 +1252,7 @@ bool VVEncAppCfg::parseCfgFF( int argc, char* argv[] )
     m_RCNumPasses = m_RCTargetBitrate > 0 ? 2 : 1;
   }
 
-  if( m_packedYUVMode && ! m_reconFileName.empty() )
+  if( m_packedYUVMode && ! m_reconFileName.empty() )  
   {
     if( ( m_outputBitDepth[ 0 ] != 10 && m_outputBitDepth[ 0 ] != 12 )
         || ( ( ( m_SourceWidth ) & ( 1 + ( m_outputBitDepth[ 0 ] & 3 ) ) ) != 0 ) )
