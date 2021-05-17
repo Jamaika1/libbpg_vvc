@@ -274,14 +274,14 @@ static int jvetvvc_close(HEVCEncoderContext *s, uint8_t **pbuf)
         add_opt(&argc, argv, "--BDPCM=1");
     }
 
-    snprintf(buf, sizeof(buf),"--MaxBTLumaISlice=%d", s->params.bit_depth);
+    /*snprintf(buf, sizeof(buf),"--MaxBTLumaISlice=%d", s->params.bit_depth);
     add_opt(&argc, argv, buf);
     snprintf(buf, sizeof(buf),"--MaxBTNonISlice=%d", s->params.bit_depth);
     add_opt(&argc, argv, buf);
     snprintf(buf, sizeof(buf),"--MaxTTLumaISlice=%d", s->params.bit_depth);
     add_opt(&argc, argv, buf);
     snprintf(buf, sizeof(buf),"--MaxTTNonISlice=%d", s->params.bit_depth);
-    add_opt(&argc, argv, buf);
+    add_opt(&argc, argv, buf);*/
 
     switch(s->params.color_space) {
     case BPG_CS_YCbCr:
@@ -531,7 +531,7 @@ static int jvetvvc_close(HEVCEncoderContext *s, uint8_t **pbuf)
         add_opt(&argc, argv, "--MTSInterMaxCand=4");
         add_opt(&argc, argv, "--LFNST=1");
         add_opt(&argc, argv, "--JointCbCr=1");
-        add_opt(&argc, argv, "--DeblockingFilterDisable=1");
+        add_opt(&argc, argv, "--DeblockingFilterDisable=0");
         add_opt(&argc, argv, "--SAO=1");
         add_opt(&argc, argv, "--ALF=1");
         add_opt(&argc, argv, "--PROF=1");
