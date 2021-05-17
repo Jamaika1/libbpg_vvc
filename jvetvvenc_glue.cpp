@@ -176,11 +176,11 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
 
     snprintf(buf, sizeof(buf),"--framerate=%d", 8 * s->params.frame_rate);
     add_opt(&argc, argv, buf);
-    snprintf(buf, sizeof(buf),"--qp=%d", s->params.qp);
-    add_opt(&argc, argv, buf);
-
     snprintf(buf, sizeof(buf),"--internal-bitdepth=%d", s->params.bit_depth);
     add_opt(&argc, argv, buf);
+
+    snprintf(buf, sizeof(buf),"--decodedpicturehash=%d",
+             s->params.sei_decoded_picture_hash);
 
     switch(s->params.chroma_format) {
     case BPG_FORMAT_GRAY:
@@ -197,15 +197,6 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
         break;
     default:
         abort();
-    }
-
-    if (s->params.lossless)
-    {
-      add_opt(&argc, argv, "--CostMode=lossless");
-    }
-    else
-    {
-      add_opt(&argc, argv, "--CostMode=lossy");
     }
 
     if (s->params.bit_depth == 8)
@@ -293,20 +284,64 @@ static int jvetvvenc_close(HEVCEncoderContext *s, uint8_t **pbuf)
       add_opt(&argc, argv, "--preset=faster");
     }
 
-    //snprintf(buf, sizeof(buf),"--SEIDecodedPictureHash=%d",
-             //s->params.sei_decoded_picture_hash);
-    //add_opt(&argc, argv, buf);
+    if (s->params.lossless)
+    {
+      add_opt(&argc, argv, "--CostMode=lossless");
+      add_opt(&argc, argv, "--qp=0");
+      add_opt(&argc, argv, "--ChromaTS=1");
+      add_opt(&argc, argv, "--DepQuant=0");
+      add_opt(&argc, argv, "--RDOQ=0");
+      add_opt(&argc, argv, "--RDOQTS=0");
+      add_opt(&argc, argv, "--SBT=0");
+      add_opt(&argc, argv, "--ISP=0");
+      add_opt(&argc, argv, "--MTS=0");
+      add_opt(&argc, argv, "--LFNST=0");
+      add_opt(&argc, argv, "--JointCbCr=0");
+      add_opt(&argc, argv, "--LoopFilterDisable=1");
+      add_opt(&argc, argv, "--SAO=0");
+      add_opt(&argc, argv, "--ALF=0");
+      add_opt(&argc, argv, "--CCALF=0");
+      add_opt(&argc, argv, "--DMVR=0");
+      add_opt(&argc, argv, "--BIO=0");
+      add_opt(&argc, argv, "--PROF=0");
+      add_opt(&argc, argv, "--EDO=0");
+      //add_opt(&argc, argv, "--TSRCdisableLL=1");
+    }
+    else
+    {
+      add_opt(&argc, argv, "--CostMode=lossy");
+      snprintf(buf, sizeof(buf),"--qp=%d", s->params.qp);
+      add_opt(&argc, argv, buf);
+        add_opt(&argc, argv, "--ChromaTS=1");
+        add_opt(&argc, argv, "--DepQuant=1");
+        add_opt(&argc, argv, "--RDOQ=1");
+        add_opt(&argc, argv, "--RDOQTS=1");
+        add_opt(&argc, argv, "--SBT=1");
+        add_opt(&argc, argv, "--ISP=1");
+        add_opt(&argc, argv, "--MTS=1");
+        //add_opt(&argc, argv, "--MTSIntraMaxCand=4");
+        //add_opt(&argc, argv, "--MTSInterMaxCand=4");
+        add_opt(&argc, argv, "--LFNST=1");
+        add_opt(&argc, argv, "--JointCbCr=1");
+        add_opt(&argc, argv, "--LoopFilterDisable=0");
+        add_opt(&argc, argv, "--SAO=1");
+        add_opt(&argc, argv, "--ALF=1");
+        add_opt(&argc, argv, "--PROF=1");
+        //add_opt(&argc, argv, "--DualITree=1");
+    }
 
+    add_opt(&argc, argv, "--Log2MaxTbSize=5");
     add_opt(&argc, argv, "--verbosity=6");
-    //snprintf(buf, sizeof(buf),"--frames=%d", s->frame_count);
-    //add_opt(&argc, argv, buf);
     add_opt(&argc, argv, "--frames=1");
     add_opt(&argc, argv, "--threads=4");
     add_opt(&argc, argv, "--gopsize=1");
     add_opt(&argc, argv, "--intraperiod=1");
-    //add_opt(&argc, argv, "--preset=medium");
+    add_opt(&argc, argv, "--profile=auto");
     add_opt(&argc, argv, "--level=6.3");
     add_opt(&argc, argv, "--tier=main");
+    add_opt(&argc, argv, "--accessunitdelimiter=0");
+    add_opt(&argc, argv, "--vuiparameterspresent=1");
+    add_opt(&argc, argv, "--hrdparameterspresent=0");
     add_opt(&argc, argv, "--output=image.vvc");
 
   std::string cAppname = argv[0];
